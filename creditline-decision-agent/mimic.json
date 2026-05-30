@@ -1,0 +1,42 @@
+{
+  "$schema": "https://mimicai.co/schema/mimic.json",
+  "domain": "retail bank consumer credit-line decisioning: applicants requesting new credit lines or limit increases, their existing accounts, and simulated credit-bureau reports",
+  "llm": {
+    "provider": "anthropic",
+    "model": "claude-haiku-4-5"
+  },
+  "databases": {
+    "primary": {
+      "type": "postgres",
+      "url": "$DATABASE_URL",
+      "schema": { "source": "introspect" },
+      "seedStrategy": "truncate-and-insert"
+    }
+  },
+  "personas": [
+    {
+      "name": "over-ceiling-stretch",
+      "description": "38yo salaried professional, ~72k annual income, one existing credit card with a modest balance, clean 24-month delinquency record, credit score ~710. Requests a LIMIT INCREASE to 25,000 — well above the bank's 15,000 auto-approve ceiling — which also pushes debt-to-income just over appetite. Channel: app."
+    },
+    {
+      "name": "clean-auto-approve",
+      "description": "45yo homeowner, ~98k income, excellent credit score ~775, low outstanding debt, no delinquencies. Requests a NEW modest credit line around 8,000 — comfortably within the auto-approve ceiling and all thresholds. Channel: web."
+    },
+    {
+      "name": "borderline-adverse",
+      "description": "33yo self-employed renter, ~54k income, credit score in the high 600s, a couple of delinquencies in the last 24 months and several recent hard inquiries. Requests a small INCREASE around 6,000 that trips at least one policy threshold. Channel: branch."
+    }
+  ],
+  "generate": {
+    "seed": 42,
+    "tables": {
+      "customers": 6,
+      "credit_lines": "auto",
+      "bureau_reports": "auto",
+      "credit_line_requests": 6,
+      "decision_policies": 0,
+      "decisions": 0,
+      "approvals": 0
+    }
+  }
+}
