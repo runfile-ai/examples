@@ -39,8 +39,10 @@ procedural detail lives in the project Skills — **intake**, **scoring**, and
 ## Provenance values to pass
 
 - `model_version`: the model you are running as (e.g. `claude-sonnet-4-6`).
-- `prompt_version_hash`: `agent/prompts.py` exposes the canonical
-  `PROMPT_VERSION_HASH`; if you don't have it, use `sha256:claude-md-v1`.
+- `prompt_version_hash`: call `creditline_get_agent_provenance` and pass back its
+  `prompt_version_hash` verbatim. This is the canonical sha256 over these very
+  instructions, so the recorded decision pins exactly what governed it. Do not
+  invent or approximate this value.
 
 Be concise, show the numbers you relied on, and never communicate an adverse
 outcome to the customer before a human has confirmed it.

@@ -1,51 +1,44 @@
-"""Agent identity, model/prompt provenance, and the system prompt.
+"""Agent identity and model/prompt provenance.
 
-``PROMPT_VERSION_HASH`` is a stable sha256 over the system prompt text. The
-agent passes it into ``creditline_record_decision`` so the recorded decision
-pins exactly which prompt produced it.
+CLAUDE.md is the single source of truth for the agent's operating instructions —
+it governs both the Claude Code CLI runtime and the Agent SDK runtime. So the
+canonical ``PROMPT_VERSION_HASH`` is a sha256 over CLAUDE.md's raw bytes, and
+that exact value is what every runtime records via ``creditline_record_decision``
+so a recorded decision pins precisely which prompt produced it.
+
+The MCP server exposes the same value through ``creditline_get_agent_provenance``
+(see ``prompt_version_hash`` there) so a CLI agent that never imports this module
+still records the canonical hash rather than a fallback.
 """
 from __future__ import annotations
 
 import hashlib
 import os
+from pathlib import Path
 
 AGENT_ID = "creditline-decision-agent"
 AGENT_VERSION = "0.1.0"
 MODEL_VERSION = os.environ.get("AGENT_MODEL", "claude-opus-4-8")
 
-SYSTEM_PROMPT = """\
-You are the Credit-Line Decision Agent for a regulated lender. You decide whether
-to APPROVE, DENY, or ESCALATE a customer's credit-line request. Creditworthiness
-assessment is a high-risk activity (EU AI Act Annex III §5(b)); act accordingly.
+_CLAUDE_MD = Path(__file__).resolve().parent.parent / "CLAUDE.md"
 
-You may act ONLY through the `mimic-creditline` MCP tools. Never invent data.
+_FALLBACK_PROMPT = (
+    "You are the Credit-Line Decision Agent. Act only through the mimic-creditline "
+    "MCP tools; intake -> bureau -> policy -> score -> decide -> record -> human "
+    "approval. Never auto-deny; every adverse outcome escalates to a human."
+)
 
-Process every request in this exact order:
-  1. INTAKE   — `creditline_get_request`, then `creditline_get_customer`.
-  2. BUREAU   — `creditline_pull_bureau` for the customer.
-  3. POLICY   — `creditline_get_active_policy` (record which version you used).
-  4. SCORE    — compute, showing your arithmetic:
-                  dti = (total_outstanding_debt + requested_limit) / annual_income
-                Compare credit_score, dti, delinquencies_24m, and requested_limit
-                against the retrieved policy thresholds.
-  5. DECIDE   — apply the rules EXACTLY:
-                  • AUTO-APPROVE only if requested_limit <= auto_approve_ceiling
-                    AND credit_score >= min_credit_score AND dti <= max_dti
-                    AND delinquencies_24m <= max_delinquencies_24m.
-                  • You must NEVER auto-deny. Every adverse outcome ESCALATES.
-                  • ESCALATE if requested_limit > auto_approve_ceiling, or if any
-                    single threshold fails.
-  6. RECORD   — `creditline_record_decision` with a clear rationale and full
-                provenance (model_version, prompt_version_hash, policy_version,
-                bureau_report_id).
-  7. HUMAN    — if the recorded decision `requires_human_approval`, call
-                `creditline_request_approval`. This BLOCKS until a human credit
-                officer resolves it. Honour their resolution: if they modify or
-                reject, that overrides your recommendation — restate the final
-                outcome accordingly. Optionally `creditline_notify_customer`.
 
-Be concise, show the numbers you relied on, and never tell the customer an
-adverse outcome before a human has confirmed it.
-"""
+def _load_prompt() -> bytes:
+    try:
+        return _CLAUDE_MD.read_bytes()
+    except OSError:
+        return _FALLBACK_PROMPT.encode("utf-8")
 
-PROMPT_VERSION_HASH = "sha256:" + hashlib.sha256(SYSTEM_PROMPT.encode("utf-8")).hexdigest()
+
+_PROMPT_BYTES = _load_prompt()
+
+# The system prompt for the SDK runtime IS the CLAUDE.md content, so both
+# runtimes are governed by — and pin the hash of — the same instructions.
+SYSTEM_PROMPT = _PROMPT_BYTES.decode("utf-8")
+PROMPT_VERSION_HASH = "sha256:" + hashlib.sha256(_PROMPT_BYTES).hexdigest()

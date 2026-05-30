@@ -13,10 +13,12 @@ from __future__ import annotations
 
 import asyncio
 import datetime as dt
+import hashlib
 import json
 import os
 import uuid
 from decimal import Decimal
+from pathlib import Path
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
@@ -53,6 +55,49 @@ def _jsonify(value: Any) -> Any:
 
 def _row(record: Any) -> dict[str, Any] | None:
     return _jsonify(dict(record)) if record is not None else None
+
+
+# Canonical prompt source — CLAUDE.md governs the agent in every runtime.
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+_CLAUDE_MD = _PROJECT_ROOT / "CLAUDE.md"
+_FALLBACK_PROMPT = (
+    b"You are the Credit-Line Decision Agent. Act only through the mimic-creditline "
+    b"MCP tools; intake -> bureau -> policy -> score -> decide -> record -> human "
+    b"approval. Never auto-deny; every adverse outcome escalates to a human."
+)
+
+
+def _prompt_version_hash() -> str:
+    try:
+        data = _CLAUDE_MD.read_bytes()
+    except OSError:
+        data = _FALLBACK_PROMPT
+    return "sha256:" + hashlib.sha256(data).hexdigest()
+
+
+# ── 0. get_agent_provenance ──────────────────────────────────────────────────
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Get canonical agent prompt provenance",
+        readOnlyHint=True,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=False,
+    )
+)
+async def creditline_get_agent_provenance() -> dict[str, Any]:
+    """Return the canonical ``prompt_version_hash`` (sha256 over CLAUDE.md).
+
+    Call this before recording a decision and pass the returned
+    ``prompt_version_hash`` into ``creditline_record_decision``. This ensures the
+    recorded provenance pins the exact governing instructions regardless of how
+    the agent was launched (Claude Code CLI or Agent SDK).
+    """
+    return {
+        "prompt_version_hash": _prompt_version_hash(),
+        "prompt_source": "CLAUDE.md",
+        "agent_id": "creditline-decision-agent",
+    }
 
 
 # ── 1. get_request ───────────────────────────────────────────────────────────

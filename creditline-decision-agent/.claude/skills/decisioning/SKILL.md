@@ -5,6 +5,7 @@ description: >-
   with full provenance, and route any adverse or above-ceiling outcome through
   the human-in-the-loop approval gate. Use as the final step of every request.
 allowed-tools:
+  - mcp__mimic-creditline__creditline_get_agent_provenance
   - mcp__mimic-creditline__creditline_record_decision
   - mcp__mimic-creditline__creditline_request_approval
   - mcp__mimic-creditline__creditline_notify_customer
@@ -31,10 +32,11 @@ The outcome you record is therefore always `approved` or `escalated`.
 
 ## 2. Record the decision
 
-Call `creditline_record_decision` with a precise `rationale` (cite the numbers
-and which rule fired) and full provenance: `model_version`, `prompt_version_hash`,
-`policy_version`, `bureau_report_id`, and — for an approval — `approved_limit`.
-The tool returns `requires_human_approval`.
+First call `creditline_get_agent_provenance` and keep its `prompt_version_hash`.
+Then call `creditline_record_decision` with a precise `rationale` (cite the
+numbers and which rule fired) and full provenance: `model_version`, that
+`prompt_version_hash`, `policy_version`, `bureau_report_id`, and — for an
+approval — `approved_limit`. The tool returns `requires_human_approval`.
 
 ## 3. Human-in-the-loop
 

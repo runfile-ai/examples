@@ -27,6 +27,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEMO_REQUEST_ID = "11111111-1111-1111-1111-111111111111"
 
 MCP_TOOLS = [
+    "mcp__mimic-creditline__creditline_get_agent_provenance",
     "mcp__mimic-creditline__creditline_get_request",
     "mcp__mimic-creditline__creditline_get_customer",
     "mcp__mimic-creditline__creditline_pull_bureau",
