@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "mimic-creditline": {
+      "command": "uv",
+      "args": ["run", "--quiet", "python", "-m", "mcp_servers.mimic_creditline.server"],
+      "env": {
+        "MIMIC_DB_DSN": "${MIMIC_DB_DSN:-postgresql://creditline_agent:agent_demo_pw@localhost:5433/mimic_creditline}",
+        "APPROVAL_TIMEOUT_SECONDS": "${APPROVAL_TIMEOUT_SECONDS:-900}",
+        "APPROVAL_POLL_SECONDS": "${APPROVAL_POLL_SECONDS:-2}"
+      }
+    }
+  }
+}

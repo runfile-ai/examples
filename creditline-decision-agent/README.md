@@ -92,11 +92,37 @@ bash scripts/init_db.sh
 # 5a. Deterministic demo (no API key) — drives the real MCP tools end to end
 python -m scripts.run_demo
 
-# 5b. Live, model-driven agent (needs ANTHROPIC_API_KEY)
+# 5b. Live, model-driven agent via the Claude Agent SDK
 python -m agent.main 11111111-1111-1111-1111-111111111111
 #   …in a second terminal, resolve the blocking approval gate:
 python -m scripts.officer_console
 ```
+
+### Run it via the Claude Code runtime
+
+The project ships a native Claude Code setup, so you can drive the same agent
+straight from the `claude` CLI — no Python entrypoint needed:
+
+- `.mcp.json` registers the `mimic-creditline` MCP server,
+- `CLAUDE.md` is the agent's operating manual,
+- `.claude/settings.json` enables the server and allow-lists its tools,
+- `.claude/skills/` are loaded as Skills automatically.
+
+```bash
+set -a && . ./.env && set +a            # so the MCP server can reach Postgres
+
+# one terminal: stand in for the credit officer (or use the interactive console)
+python -m scripts.officer_console auto
+
+# another terminal: run the agent
+claude -p "Process credit-line request 11111111-1111-1111-1111-111111111111 \
+  end to end; when you escalate, open the approval gate, wait for the officer, \
+  then state the final outcome." --model claude-sonnet-4-6
+```
+
+This path is verified end to end: the model runs intake → bureau → policy →
+score → escalate → record → HITL gate → override, and the officer modifies the
+recommendation to an approved 12,000 limit (`is_override = true`).
 
 The seeded escalation case (**Dana Whitfield**, request
 `11111111-1111-1111-1111-111111111111`) asks for 25,000 — above the 15,000

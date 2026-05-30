@@ -1,0 +1,14 @@
+{
+  "enabledMcpjsonServers": ["mimic-creditline"],
+  "permissions": {
+    "allow": [
+      "mcp__mimic-creditline__creditline_get_request",
+      "mcp__mimic-creditline__creditline_get_customer",
+      "mcp__mimic-creditline__creditline_pull_bureau",
+      "mcp__mimic-creditline__creditline_get_active_policy",
+      "mcp__mimic-creditline__creditline_record_decision",
+      "mcp__mimic-creditline__creditline_request_approval",
+      "mcp__mimic-creditline__creditline_notify_customer"
+    ]
+  }
+}
