@@ -19,12 +19,15 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from .prompts import MODEL_VERSION, SYSTEM_PROMPT
+from .prompts import AGENT_ID, AGENT_VERSION, MODEL_VERSION, SYSTEM_PROMPT
 
 load_dotenv()
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEMO_REQUEST_ID = "11111111-1111-1111-1111-111111111111"
+
+# Stable, version-pinned Runfile audit identity for this agent.
+AGENT_IDENTITY = f"did:web:runfile.ai:agents:{AGENT_ID}:{AGENT_VERSION}"
 
 MCP_TOOLS = [
     "mcp__mimic-creditline__creditline_get_agent_provenance",
@@ -57,6 +60,9 @@ def build_options():
         # Load project Skills from .claude/skills and project settings.
         setting_sources=["project"],
         allowed_tools=MCP_TOOLS,
+        # Return the model's reasoning as text (Opus omits it by default), so the
+        # decision's "why" is captured in the audit trail rather than discarded.
+        thinking={"type": "adaptive", "display": "summarized"},
         # Non-interactive demo: don't prompt for each domain tool call.
         permission_mode="bypassPermissions",
         mcp_servers={
@@ -86,8 +92,29 @@ def _render(message) -> None:
             print(f"\n  ← tool result received", flush=True)
 
 
+def _init_runfile() -> None:
+    """Opt-in Runfile audit capture.
+
+    No-op unless RUNFILE_API_KEY (or RUNFILE_DISABLED) is set, so the example
+    still runs without Runfile configured. RUNFILE_BASE_URL overrides the ingest
+    host (e.g. a local or self-hosted endpoint); otherwise the region default is used.
+    """
+    if not (os.environ.get("RUNFILE_API_KEY") or os.environ.get("RUNFILE_DISABLED")):
+        return
+    import runfile_ai
+
+    runfile_ai.init(base_url=os.environ.get("RUNFILE_BASE_URL"))
+
+
 async def run(request_id: str) -> None:
-    from claude_agent_sdk import query
+    # Runfile observes the agent through the Claude Agent SDK adapter: observe_query
+    # wraps query(), owns the run lifecycle, and translates the agent's tool/LLM
+    # activity into tamper-evident audit events. It passes through transparently
+    # when Runfile isn't configured.
+    import runfile_ai
+    from runfile_ai.integrations.anthropic import observe_query
+
+    _init_runfile()
 
     prompt = (
         f"Process credit-line request {request_id}. Follow the full intake → "
@@ -97,8 +124,14 @@ async def run(request_id: str) -> None:
     )
 
     print(f"=== Credit-Line Decision Agent — request {request_id} ===\n")
-    async for message in query(prompt=prompt, options=build_options()):
+    async for message in observe_query(
+        prompt=prompt,
+        options=build_options(),
+        agent_identity=AGENT_IDENTITY,
+        conversation_id=request_id,
+    ):
         _render(message)
+    runfile_ai.flush()  # drain captured audit events before exit
     print("\n\n=== run complete ===")
 
 

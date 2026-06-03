@@ -8,9 +8,10 @@ All customer/bureau/policy data is simulated. Every adverse or above-ceiling
 outcome is routed to a human credit officer for confirmation or override — the
 EU AI Act Art. 14 / SR 11-7 §5.2 "effective challenge" node.
 
-> Scope of this example: the **agent** and the **MCP server** it acts through.
-> The out-of-band audit "runfile" described in the original concept is **not**
-> included here.
+> Scope of this example: the **agent**, the **MCP server** it acts through, and
+> an opt-in **Runfile** audit trail. Capture is wired through the Claude Agent
+> SDK adapter and is a no-op unless `RUNFILE_API_KEY` is set, so the example runs
+> identically with or without Runfile. See [Audit capture with Runfile](#audit-capture-with-runfile).
 
 ## Architecture
 
@@ -136,6 +137,29 @@ run** (polling) until a credit officer resolves it out of band via
 `scripts/officer_console.py`. The officer can **confirm**, **reject**, or
 **modify** (approve a lower limit). A reject/modify against the agent's
 recommendation sets `is_override = true`.
+
+## Audit capture with Runfile
+
+This build observes the agent through the **Runfile** Python SDK
+([`runfile-ai`](https://pypi.org/project/runfile-ai/), installed from PyPI via
+the `runfile-ai[anthropic]` dependency — never a local path). `agent/main.py`
+swaps the SDK's `query()` for `observe_query()` from
+`runfile_ai.integrations.anthropic`: it owns the run lifecycle and translates the
+agent's tool calls and model activity into tamper-evident audit events, then
+`flush()` drains them before exit. The agent runs under a stable, version-pinned
+identity (`did:web:runfile.ai:agents:creditline-decision-agent:0.1.0`), and
+`thinking` is set to `summarized` so the decision's reasoning lands in the trail
+rather than being discarded.
+
+Capture is **opt-in and transparent**: with no `RUNFILE_API_KEY` set,
+`observe_query()` passes straight through and the run is byte-for-byte identical
+to plain `query()`.
+
+```bash
+export RUNFILE_API_KEY=rk_...           # enable capture
+export RUNFILE_BASE_URL=http://localhost:8787   # optional: local/self-hosted ingest
+python -m agent.main 11111111-1111-1111-1111-111111111111
+```
 
 ## Layout
 
