@@ -7,8 +7,9 @@ requires-python = ">=3.11"
 dependencies = [
     "claude-agent-sdk>=0.2.0",
     # Runfile audit capture, from PyPI. The [anthropic] extra wires up the
-    # Claude Agent SDK adapter (observe_query) used in agent/main.py.
-    "runfile-ai[anthropic]>=0.1.2",
+    # Claude Agent SDK adapter (observe_query) used in agent/main.py. 0.2.0 keeps
+    # both example builds on a single, current SDK line (see the LangGraph build).
+    "runfile-ai[anthropic]>=0.2.0",
     "mcp>=1.2.0",
     "asyncpg>=0.29",
     "pydantic>=2.6",
