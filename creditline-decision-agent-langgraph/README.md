@@ -43,6 +43,28 @@ is reused as-is.
 - **Provenance:** the `prompt_version_hash` is computed locally from the
   instructions and passed to `creditline_record_decision` — same contract as the
   other builds.
+- **Runfile audit (opt-in):** one line instruments the compiled graph — see
+  [Audit capture with Runfile](#audit-capture-with-runfile).
+
+## Audit capture with Runfile
+
+Like the Claude Agent SDK build, this build can observe the agent through the
+**Runfile** Python SDK ([`runfile-ai`](https://pypi.org/project/runfile-ai/),
+installed **from PyPI** via the `runfile-ai[langgraph]` extra — never a local
+path). `agent/main.py` wraps the compiled graph with
+`runfile_ai.integrations.langgraph.instrument(...)` under a stable, version-pinned
+identity (`did:web:runfile.ai:agents:creditline-decision-agent-langgraph:0.1.0`),
+translating LangGraph's tool and model signals into tamper-evident audit events.
+
+Capture is **opt-in and transparent**: the wrapper is a no-op unless
+`RUNFILE_API_KEY` is set (and degrades to a pass-through if `runfile-ai` isn't
+installed), so the example runs identically without Runfile.
+
+```bash
+export RUNFILE_API_KEY=rk_...           # enable capture
+export RUNFILE_BASE_URL=http://localhost:8787   # optional: local/self-hosted ingest
+python -m agent.main 11111111-1111-1111-1111-111111111111
+```
 
 ## What's here vs. reused
 

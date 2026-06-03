@@ -4,3 +4,7 @@ __pycache__/
 *.pyc
 *.egg-info/
 .pytest_cache/
+
+# Local audit-capture scratch output (raw streams, run logs)
+*.log
+*.jsonl

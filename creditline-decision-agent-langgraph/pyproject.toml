@@ -9,6 +9,9 @@ dependencies = [
     "langchain>=1.3",
     "langchain-mcp-adapters>=0.2",
     "langchain-anthropic>=1.4",
+    # Runfile audit capture, from PyPI. The [langgraph] extra wires up the
+    # LangGraph adapter (instrument) used in agent/main.py.
+    "runfile-ai[langgraph]>=0.1.2",
     # The shared mimic-creditline MCP server runs as a subprocess from the
     # sibling project; these are its runtime deps so this venv can launch it.
     "mcp>=1.2.0",

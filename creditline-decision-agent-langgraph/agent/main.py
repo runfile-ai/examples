@@ -65,6 +65,12 @@ async def run(request_id: str) -> None:
     model = init_chat_model(MODEL, model_provider=MODEL_PROVIDER, temperature=0)
     agent = create_react_agent(model, tools, prompt=INSTRUCTIONS)
 
+    # Runfile audit capture (optional): one line instruments the graph. A no-op
+    # unless RUNFILE_API_KEY is set — and even instrumented, the SDK degrades to a
+    # transparent pass-through if init() wasn't called. Set RUNFILE_API_KEY (and
+    # optionally RUNFILE_BASE_URL for a local stand-in) to capture this run.
+    agent = _instrument_runfile(agent)
+
     user_prompt = (
         f"Process credit-line request {request_id} end to end. When you escalate, "
         f"open the approval gate and wait for the credit officer's resolution, "
@@ -78,6 +84,37 @@ async def run(request_id: str) -> None:
     )
     print(result["messages"][-1].content)
     print("\n=== run complete ===")
+
+
+RUNFILE_AGENT_IDENTITY = "did:web:runfile.ai:agents:creditline-decision-agent-langgraph:0.1.0"
+
+
+def _instrument_runfile(agent: object) -> object:
+    """Wrap the compiled graph with the Runfile LangGraph adapter, if configured.
+
+    Returns ``agent`` unchanged when ``runfile-ai`` isn't installed or
+    ``RUNFILE_API_KEY`` isn't set, so the example runs identically without Runfile.
+    ``RUNFILE_BASE_URL`` points the SDK at a local ingest stand-in for offline capture.
+    """
+    if not os.environ.get("RUNFILE_API_KEY"):
+        return agent
+    try:
+        import runfile_ai
+        from runfile_ai.integrations import langgraph as runfile_langgraph
+    except ImportError:
+        print("[runfile] RUNFILE_API_KEY set but runfile-ai not installed — skipping capture.")
+        return agent
+
+    init_kwargs = {"api_key": os.environ["RUNFILE_API_KEY"]}
+    if os.environ.get("RUNFILE_BASE_URL"):
+        init_kwargs["base_url"] = os.environ["RUNFILE_BASE_URL"]
+    runfile_ai.init(**init_kwargs)
+    print(f"[runfile] capturing this run as {RUNFILE_AGENT_IDENTITY}")
+    return runfile_langgraph.instrument(
+        agent,
+        agent_identity=RUNFILE_AGENT_IDENTITY,
+        conversation_id=DEMO_REQUEST_ID,
+    )
 
 
 if __name__ == "__main__":
