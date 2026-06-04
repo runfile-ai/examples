@@ -143,7 +143,8 @@ async function findPatient(args: Json) {
         `SELECT id, first_name, last_name, phone
            FROM ext.patients
           WHERE inactive = false
-            AND ( ($1::text IS NOT NULL AND phone = $1)
+            AND ( ($1::text IS NOT NULL AND length(regexp_replace($1,'\\D','','g')) >= 7
+                   AND right(regexp_replace(phone,'\\D','','g'), 10) = right(regexp_replace($1,'\\D','','g'), 10))
                OR ($2::text IS NOT NULL AND lower(last_name) = lower($2) AND ($3::date IS NULL OR dob = $3))
                OR ($4::text IS NOT NULL AND lower(email) = lower($4))
                OR ($5::text IS NOT NULL AND lower(email) = lower($5)) )
@@ -328,17 +329,32 @@ async function findOpenSlots(args: Json) {
     const from = args.from ? new Date(String(args.from)) : new Date();
     const to = args.to ? new Date(String(args.to)) : new Date(from.getTime() + 14 * 24 * 3600 * 1000);
 
-    const avails = (
+    const allAvails = (
       await c.query(
         `SELECT pa.*, pr.name AS provider_name, o.name AS operatory_name
            FROM ext.provider_availabilities pa
            JOIN ext.providers pr ON pr.id = pa.provider_id
            JOIN ext.operatories o ON o.id = pa.operatory_id
-          WHERE pa.location_id = $1
-            AND ($2::text IS NULL OR pa.provider_id = $2 OR pr.name ILIKE '%'||$2||'%')`,
-        [descriptor.location_id, providerPref],
+          WHERE pa.location_id = $1`,
+        [descriptor.location_id],
       )
     ).rows;
+    // Forgiving provider match: accept the id, or a spoken name where every
+    // significant token appears in the provider's name ("Dr. Nguyen" matches
+    // "Dr. Alice Nguyen"; a bare surname works too).
+    const stop = new Set(["dr", "doctor", "mr", "mrs", "ms", "the"]);
+    const prefTokens = (providerPref ?? "")
+      .toLowerCase()
+      .replace(/\./g, "")
+      .split(/\s+/)
+      .filter((t) => t && !stop.has(t));
+    const avails = providerPref
+      ? allAvails.filter(
+          (a) =>
+            a.provider_id === providerPref ||
+            (prefTokens.length > 0 && prefTokens.every((t: string) => a.provider_name.toLowerCase().includes(t))),
+        )
+      : allAvails;
 
     const booked = (
       await c.query(
