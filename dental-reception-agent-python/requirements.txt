@@ -1,0 +1,4 @@
+claude-agent-sdk>=0.2.89
+mcp>=1.2.0
+asyncpg>=0.30.0
+python-dotenv>=1.0.0

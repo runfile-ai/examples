@@ -1,0 +1,14 @@
+[project]
+name = "dental-reception-agent"
+version = "0.1.0"
+description = "Dental front-desk agent (Python, Claude Agent SDK) — patient lookup, booking, reschedule/cancel, coverage checks, and recalls through an identity gate and a human-gated, Halo-backed tool layer over a local Postgres shaped like a NexHealth-style synchronizer."
+requires-python = ">=3.11"
+dependencies = [
+    "claude-agent-sdk>=0.2.89",
+    "mcp>=1.2.0",
+    "asyncpg>=0.30.0",
+    "python-dotenv>=1.0.0",
+]
+
+[tool.setuptools]
+packages = ["src"]
