@@ -1,0 +1,14 @@
+[project]
+name = "claim-adjudication-agent"
+version = "0.1.0"
+description = "Insurance claim adjudication agent (Python, Claude Agent SDK). The model orchestrates and selects reason codes; a deterministic engine computes the money; a human owns every denial or reduction. Tamper-evident evidence per decision. Local Postgres shaped like a payer's systems and the X12 transactions."
+requires-python = ">=3.11"
+dependencies = [
+    "claude-agent-sdk>=0.2.89",
+    "mcp>=1.2.0",
+    "asyncpg>=0.30.0",
+    "python-dotenv>=1.0.0",
+]
+
+[tool.setuptools]
+packages = ["src"]
