@@ -59,7 +59,9 @@ def _instrument_runfile(runner: object) -> tuple[object, bool]:
     wrapped = runfile_openai.instrument_runner(
         runner,
         agent_identity=RUNFILE_AGENT_IDENTITY,
-        conversation_id=DEMO_REQUEST_ID,
+        # RUNFILE_CONVERSATION_ID lets a verification run use a fresh, first-in-conversation
+        # id (clean genesis hash); defaults to the demo request id.
+        conversation_id=os.environ.get("RUNFILE_CONVERSATION_ID", DEMO_REQUEST_ID),
     )
     return wrapped, True
 
