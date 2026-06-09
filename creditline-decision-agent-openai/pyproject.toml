@@ -14,6 +14,11 @@ dependencies = [
     "python-dotenv>=1.0",
 ]
 
+[project.optional-dependencies]
+# Runfile audit capture (optional): the OpenAI Agents adapter ships in runfile-ai
+# 0.3.0 (0.2.x shipped only an instrument_runner() skeleton).
+runfile = ["runfile-ai[openai-agents]>=0.3.0"]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
