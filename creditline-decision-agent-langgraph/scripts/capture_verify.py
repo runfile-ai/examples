@@ -148,7 +148,12 @@ def _build_tools() -> list[Any]:
         """Open the human-in-the-loop approval gate. BLOCKS via interrupt()."""
         # interrupt() suspends the graph; the value returned here is whatever the
         # resuming Command(resume=...) supplies — the officer's resolution.
-        return interrupt({"decision_id": decision_id, "summary": summary})
+        # Name where this escalates: the SDK passively promotes `expected_resumer`
+        # (the routing/assignment target) to suspension_details.expected_resumer.
+        return interrupt(
+            {"decision_id": decision_id, "summary": summary,
+             "expected_resumer": "role:lead_credit_officer"}
+        )
 
     @tool
     def creditline_notify_customer(request_id: str, outcome: str, approved_limit: int) -> dict:
