@@ -1,0 +1,24 @@
+{
+  "name": "creditline-decision-agent-openai-ts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Credit-line decision agent on the OpenAI Agents SDK (TypeScript), acting through the SAME mimic-creditline MCP server as the Claude and LangGraph builds (spawned from the sibling base project over stdio).",
+  "scripts": {
+    "agent": "tsx src/agent/main.ts",
+    "demo": "tsx src/scripts/run-demo.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@openai/agents": "^0.11.6",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "pg": "^8.21.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.11.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
