@@ -1,0 +1,27 @@
+{
+  "name": "creditline-decision-agent-ts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Human-in-the-loop credit-line decision agent (TypeScript, Claude Agent SDK) acting through the mimic-creditline MCP server over a local Postgres. The base project: it owns the MCP server, the schema/seed, and the officer console reused by the LangGraph and OpenAI builds.",
+  "scripts": {
+    "mcp": "tsx src/mcp/server.ts",
+    "agent": "tsx src/agent/main.ts",
+    "demo": "tsx src/scripts/run-demo.ts",
+    "officer": "tsx src/scripts/officer-console.ts",
+    "initdb": "tsx db/seed.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.3.162",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "pg": "^8.21.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.11.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

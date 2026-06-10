@@ -22,6 +22,22 @@ The `creditline-decision-agent` (Claude Agent SDK) build is the **base project**
 it owns the MCP server, the Postgres schema + seed, and the officer console that
 the other builds reuse. Start there.
 
+### TypeScript ports
+
+Each build also has a TypeScript port, for exercising the TS agent runtimes and
+the same MCP/HITL contract. They follow the conventions of the `monitoring-agent`
+example (`src/`, `pg`, `zod`, stdio MCP, `tsx`). The Runfile audit capture is not
+wired in the ports.
+
+| Python build | TypeScript port | Runtime |
+|--------------|-----------------|---------|
+| [`creditline-decision-agent`](creditline-decision-agent) | [`creditline-decision-agent-ts`](creditline-decision-agent-ts) | Claude Agent SDK (`@anthropic-ai/claude-agent-sdk`) |
+| [`creditline-decision-agent-langgraph`](creditline-decision-agent-langgraph) | [`creditline-decision-agent-langgraph-ts`](creditline-decision-agent-langgraph-ts) | LangGraph.js (`@langchain/langgraph`) |
+| [`creditline-decision-agent-openai`](creditline-decision-agent-openai) | [`creditline-decision-agent-openai-ts`](creditline-decision-agent-openai-ts) | OpenAI Agents SDK (`@openai/agents`) |
+
+`creditline-decision-agent-ts` is the base TS project (owns the `mimic-creditline`
+MCP server, schema/seed, and officer console); the other two spawn it over stdio.
+
 ## Audit capture with Runfile
 
 The two integrated builds observe their agent through the **Runfile** Python SDK
